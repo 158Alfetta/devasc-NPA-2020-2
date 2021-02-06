@@ -7,6 +7,7 @@ class Router:
         self.model = model
         self.hostname = hostname
         self.interfaces = []
+        self.name_interfaces = []
     
     def addInterface(self, interface):
         self.interfaces.append(
@@ -18,32 +19,55 @@ class Router:
                 "n_object":''
             }
         )
+        
+        self.name_interfaces.append(interface)
 
     def showInterface(self):
         print("---------------------------------------------------")
         print("List of Interface of :" + self.hostname)
-        for i in self.interfaces:
-            print("Interface :"+i['interface'])
+        print(*self.name_interfaces, sep='\n')
         print("---------------------------------------------------")
 
     def connect(self, srcInt, dstDevice, dstInt):
-        flag = 0
-        for i in self.interfaces:
-            if i['interface'] == srcInt:
-                if i['n_hostname'] != '':
-                    self.disconnect(i['interface'])
-                    print("!!!!! "+srcInt+" is Disconnected !!!!!")
-                i['n_hostname'] = dstDevice.hostname
-                i['n_interface'] = dstInt
-                i['n_platform'] = dstDevice.brand+" "+dstDevice.model
-                i['n_object'] = dstDevice
-                flag = 1
-        for j in dstDevice.interfaces:
-            if j['interface'] == dstInt and flag == 1:
-                j['n_hostname'] = self.hostname
-                j['n_interface'] = srcInt
-                j['n_platform'] = self.brand+" "+self.model
-                i['n_object'] = self
+        pos_srcInt = self.isOrderInterface(srcInt)
+        pos_dstInt = dstDevice.isOrderInterface(dstInt)
+
+        if pos_dstInt == 'wrong' or pos_dstInt == 'wrong':
+            print("Invalid Interface")
+            return
+
+        src_interface = self.interfaces[pos_srcInt]
+        dst_interface = dstDevice.interfaces[pos_dstInt]
+
+        print(src_interface)
+        print(dst_interface)
+
+        if src_interface['n_hostname'] != '':
+            self.disconnect(pos_srcInt)
+            print("!!!!! "+srcInt+" is Disconnected !!!!!")
+
+        src_interface['n_hostname'] = dst_interface['hostname']
+        src_interface['n_interface'] = dst_interface['interface']
+        src_interface['n_platform'] = dst_interface['brand']+" "+dstDevice['model']
+        # src_interface['n_object'] = dstDevice
+
+        # for i in self.interfaces:
+        #     if i['interface'] == srcInt:
+        #         if i['n_hostname'] != '':
+        #             self.disconnect(i['interface'])
+        #             print("!!!!! "+srcInt+" is Disconnected !!!!!")
+
+        #         flag = 1
+        # for j in dstDevice.interfaces:
+        #     if j['interface'] == dstInt and flag == 1:
+
+        dst_interface['n_hostname'] = src_interface['hostname']
+        dst_interface['n_interface'] = src_interface['interface']
+        dst_interface['n_platform'] = src_interface['brand']+" "+src_interface['model']
+        # dst_interface['n_object'] = self
+
+        # self.interfaces[pos_srcInt] = src_interface
+        # dstDevice.interfaces[pos_dstInt] = dst_interface
 
     def disconnect(self, interface):
         for i in self.interfaces:
@@ -57,6 +81,14 @@ class Router:
                         j['n_platform'] = ''
                         j['n_object'] = ''
 
+    def isOrderInterface(self, interface):
+        if interface in self.name_interfaces:
+            return self.name_interfaces.index(interface)
+        else:
+            return 'wrong'
+
+    # def removeInterface(self):
+    
     def showCDP(self):
         print("List of directly connected of "+self.hostname)
         print("---------------------------------------------------")
@@ -90,4 +122,3 @@ r1.connect('GigabitEthernet0/9', r3, 'GigabitEthernet0/1')
 r1.showCDP()
 r2.showCDP()
 r3.showCDP()
-        
