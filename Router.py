@@ -6,89 +6,78 @@ class Router:
         self.brand = brand
         self.model = model
         self.hostname = hostname
-        self.interfaces = []
+        self.interfaces = {}
         self.name_interfaces = []
     
     def addInterface(self, interface):
-        self.interfaces.append(
-            {
-                "interface":interface,
+
+        self.interfaces[interface] = {
                 "n_hostname":'',
                 "n_interface":'',
                 "n_platform":'',
                 "n_object":''
-            }
-        )
+                }
         
-        self.name_interfaces.append(interface)
+        #self.interfaces['GigabitEthernet0/0']['n_hostname']
 
     def showInterface(self):
         print("---------------------------------------------------")
         print("List of Interface of :" + self.hostname)
-        print(*self.name_interfaces, sep='\n')
+        print(*self.interfaces, sep='\n')
         print("---------------------------------------------------")
 
     def connect(self, srcInt, dstDevice, dstInt):
-        pos_srcInt = self.isOrderInterface(srcInt)
-        pos_dstInt = dstDevice.isOrderInterface(dstInt)
 
-        if pos_srcInt == 'wrong' or pos_dstInt == 'wrong':
+        if not (self.isInterface(srcInt)) or not (dstDevice.isInterface(dstInt)):
             print("Invalid Interface")
-            return
+            return False
+        
+        if self.interfaces[srcInt]['n_hostname'] != '':
+            dstDevice.disconnect(self.interfaces[srcInt]["n_interface"])
+            self.disconnect(srcInt)
+        
+        self.interfaces[srcInt] = {
+            "n_hostname":dstDevice.hostname,
+            "n_interface":dstInt,
+            "n_platform":dstDevice.brand+" "+dstDevice.model,
+            "n_object":dstDevice
+        }
 
-        src_interface = self.interfaces[pos_srcInt]
-        dst_interface = dstDevice.interfaces[pos_dstInt]
+        dstDevice.interfaces[dstInt] = {
+            "n_hostname":self.hostname,
+            "n_interface":srcInt,
+            "n_platform":self.brand+" "+self.model,
+            "n_object":self  
+        }
 
-        if src_interface['n_hostname'] != '':
-            self.disconnect(pos_srcInt)
-            print("!!!!! "+srcInt+" is Disconnected !!!!!")
-
-        src_interface['n_hostname'] = dstDevice.hostname
-        src_interface['n_interface'] = dst_interface['interface']
-        src_interface['n_platform'] = dstDevice.brand+" "+dstDevice.model
-        src_interface['n_object'] = dstDevice
-
-        dst_interface['n_hostname'] = self.hostname
-        dst_interface['n_interface'] = src_interface['interface']
-        dst_interface['n_platform'] = self.brand+" "+self.model
-        dst_interface['n_object'] = self
 
 
     def disconnect(self, interface):
-        posInt = self.isOrderInterface(interface)
-        interface = self.interfaces[posInt]
+        self.interfaces[interface]['n_hostname'] = ''
+        self.interfaces[interface]['n_interface'] = ''
+        self.interfaces[interface]['n_platform'] = ''
+        self.interfaces[interface]['n_object'] = ''
 
+        print("!!!!! "+interface+" of router "+self.hostname+" is DISCONNECTED !!!!!")
 
-
-        for i in self.interfaces:
-            if i['interface'] == interface:
-                next_int = i['n_interface']
-                next_dev = i['n_object']
-                for j in next_dev.interfaces:
-                    if j['interface'] == next_int:
-                        j['n_hostname'] = ''
-                        j['n_interface'] = ''
-                        j['n_platform'] = ''
-                        j['n_object'] = ''
-
-    def isOrderInterface(self, interface):
-        if interface in self.name_interfaces:
-            return self.name_interfaces.index(interface)
+    def isInterface(self, interface):
+        if interface in self.interfaces:
+            return True
         else:
-            return 'wrong'
+            return False
 
     # def removeInterface(self):
     
     def showCDP(self):
         print("List of directly connected of "+self.hostname)
         print("---------------------------------------------------")
-        for i in self.interfaces:
-            if i['n_hostname'] != "":
+        for interface in [*self.interfaces]:
+            if self.interfaces[interface]['n_hostname'] != "":
                 print("--")
-                print("Exit Interface : "+i['interface'])
-                print("Next Device ID : "+i['n_hostname'])
-                print("Next Interface : "+i['n_interface'])
-                print("Platform : "+i['n_platform'])
+                print("Exit Interface : "+interface)
+                print("Next Device ID : "+self.interfaces[interface]['n_hostname'])
+                print("Next Interface : "+self.interfaces[interface]['n_interface'])
+                print("Platform : "+self.interfaces[interface]['n_platform'])
                 print("--")
         print("---------------------------------------------------")
 
