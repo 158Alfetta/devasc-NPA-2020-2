@@ -32,44 +32,34 @@ class Router:
         pos_srcInt = self.isOrderInterface(srcInt)
         pos_dstInt = dstDevice.isOrderInterface(dstInt)
 
-        if pos_dstInt == 'wrong' or pos_dstInt == 'wrong':
+        if pos_srcInt == 'wrong' or pos_dstInt == 'wrong':
             print("Invalid Interface")
             return
 
         src_interface = self.interfaces[pos_srcInt]
         dst_interface = dstDevice.interfaces[pos_dstInt]
 
-        print(src_interface)
-        print(dst_interface)
-
         if src_interface['n_hostname'] != '':
             self.disconnect(pos_srcInt)
             print("!!!!! "+srcInt+" is Disconnected !!!!!")
 
-        src_interface['n_hostname'] = dst_interface['hostname']
+        src_interface['n_hostname'] = dstDevice.hostname
         src_interface['n_interface'] = dst_interface['interface']
-        src_interface['n_platform'] = dst_interface['brand']+" "+dstDevice['model']
-        # src_interface['n_object'] = dstDevice
+        src_interface['n_platform'] = dstDevice.brand+" "+dstDevice.model
+        src_interface['n_object'] = dstDevice
 
-        # for i in self.interfaces:
-        #     if i['interface'] == srcInt:
-        #         if i['n_hostname'] != '':
-        #             self.disconnect(i['interface'])
-        #             print("!!!!! "+srcInt+" is Disconnected !!!!!")
-
-        #         flag = 1
-        # for j in dstDevice.interfaces:
-        #     if j['interface'] == dstInt and flag == 1:
-
-        dst_interface['n_hostname'] = src_interface['hostname']
+        dst_interface['n_hostname'] = self.hostname
         dst_interface['n_interface'] = src_interface['interface']
-        dst_interface['n_platform'] = src_interface['brand']+" "+src_interface['model']
-        # dst_interface['n_object'] = self
+        dst_interface['n_platform'] = self.brand+" "+self.model
+        dst_interface['n_object'] = self
 
-        # self.interfaces[pos_srcInt] = src_interface
-        # dstDevice.interfaces[pos_dstInt] = dst_interface
 
     def disconnect(self, interface):
+        posInt = self.isOrderInterface(interface)
+        interface = self.interfaces[posInt]
+
+
+
         for i in self.interfaces:
             if i['interface'] == interface:
                 next_int = i['n_interface']
@@ -105,6 +95,7 @@ class Router:
 r1 = Router('Cisco', '3745', 'R1')
 r1.addInterface('GigabitEthernet0/1')
 r1.addInterface('GigabitEthernet0/2')
+r1.addInterface('GigabitEthernet0/0')
 r1.showInterface()
 
 r2 = Router('Cisco', 'c7200', 'R2')
@@ -118,7 +109,8 @@ r3.addInterface('GigabitEthernet0/1')
 r3.showInterface()
         
 r1.connect('GigabitEthernet0/1', r2, 'GigabitEthernet0/0')
-r1.connect('GigabitEthernet0/9', r3, 'GigabitEthernet0/1')
+r1.connect('GigabitEthernet0/2', r3, 'GigabitEthernet0/1')
+r1.connect('GigabitEthernet0/0', r3, 'GigabitEthernet0/0')
 r1.showCDP()
 r2.showCDP()
 r3.showCDP()
