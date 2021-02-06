@@ -99,7 +99,7 @@ r3.showInterface()
         
 r1.connect('GigabitEthernet0/1', r2, 'GigabitEthernet0/0')
 r1.connect('GigabitEthernet0/2', r3, 'GigabitEthernet0/1')
-r1.connect('GigabitEthernet0/0', r3, 'GigabitEthernet0/0')
+r1.connect('GigabitEthernet0/9', r3, 'GigabitEthernet0/0')
 r1.showCDP()
 r2.showCDP()
 r3.showCDP()
