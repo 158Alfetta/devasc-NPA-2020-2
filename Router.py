@@ -87,6 +87,12 @@ class Router:
         self.addLogs(interface+" of router "+self.hostname+" is DISCONNECT!!")
         self.addLogs('Interface '+interface+' is Down')
 
+    def removeInt(self, interface):
+        self.interfaces[interface]["n_object"].disconnect(self.interfaces[interface]["n_interface"])
+        self.disconnect(interface)
+        self.interfaces.pop(interface, None)
+        self.addLogs("Interface "+interface+" on Device "+self.hostname+" was REMOVED!!!.")
+
 
     def isInterface(self, interface):
         if interface in self.interfaces:
@@ -148,4 +154,9 @@ r1.showLogs()
 r1.showInterface()
 r1.showCDP()
 r3.showCDP()
+
+r1.removeInt('GigabitEthernet0/2')
+r1.showInterface()
+r1.showCDP()
+r1.showLogs()
 
