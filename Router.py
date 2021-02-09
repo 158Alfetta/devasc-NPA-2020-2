@@ -1,5 +1,6 @@
 import time
 import datetime
+import ipcalc
 
 """Router"""
 class Router:
@@ -10,20 +11,28 @@ class Router:
         self.model = model
         self.hostname = hostname
         self.interfaces = {}
-        self.name_interfaces = []
         self.logs = []
     
     """add interface into Router"""
     def addInterface(self, interface):
         #create a dict and use interface as a key for interface data
-        self.interfaces[interface] = {
-                "n_hostname":'',
-                "n_interface":'',
-                "n_platform":'',
-                "n_object":'',
-                "status":'Down'
-                }
-        self.addLogs('Add interface '+interface+' on device '+self.hostname)
+
+        #check duplicated interface
+        if not self.isInterface(interface):
+            self.interfaces[interface] = {
+                    "n_hostname":'',
+                    "n_interface":'',
+                    "n_platform":'',
+                    "n_object":'',
+                    "ip_address":'None',
+                    "ip_pool":'None',
+                    "status":'Down'
+                    }
+            self.addLogs('Add interface '+interface+' on device '+self.hostname)
+        else:
+            self.addLogs('FAIL to add interface '+interface+' on device '+self.hostname+" DUPLICATE INTERFACE FOUND")
+
+        return self.interfaces
     
     """Logs for showing event that occur in the system"""
     def addLogs(self, event):
@@ -35,7 +44,7 @@ class Router:
         print("---------------------------------------------------")
         print("List of Interface of :" + self.hostname)
         for i in [*self.interfaces]:
-            print(i+' STATUS: '+self.interfaces[i]['status'])
+            print(i+' | STATUS: '+self.interfaces[i]['status']+' | IP_ADDRESS: '+self.interfaces[i]['ip_address'])
         print("---------------------------------------------------")
 
     """create connection of devices"""
@@ -85,6 +94,8 @@ class Router:
         self.interfaces[interface]['n_interface'] = ''
         self.interfaces[interface]['n_platform'] = ''
         self.interfaces[interface]['n_object'] = ''
+        self.interfaces[interface]['ip_address'] = ''
+        self.interfaces[interface]['ip_pool'] = ''
         self.interfaces[interface]['status'] = 'Down'
 
         self.addLogs(interface+" of router "+self.hostname+" is DISCONNECT!!")
@@ -128,6 +139,45 @@ class Router:
         print(*self.logs, sep='\n')
         print("---------------------------------------------------")
 
+    def assignIpaddr(self, interface, ip):
+        if not (self.isInterface(interface)):
+            self.addLogs("invalid Interface")
+            return False
+
+        ip_pool = [str(x) for x in ipcalc.Network(ip)]
+        if self.interfaces[interface]['ip_address'] == 'None' and not self.isIpaddrExist(ip, interface) and not self.isDuplicateSubnet(ip_pool):
+            self.interfaces[interface]['ip_address'] = str(ip.split('/')[0])
+            self.interfaces[interface]['ip_pool'] = ip_pool
+            self.addLogs(ip+" was assigned to "+self.hostname+" on interface "+interface+" gracefully.")
+        else:
+            self.addLogs(ip+" is OVERLAPPED!! for assign to "+interface)
+
+    
+    def isIpaddrExist(self, ip, interface):
+        for inf in self.interfaces:
+            if str(ip.split('/')[0]) in self.interfaces[inf]['ip_pool']:
+                if inf == interface: #check on just change ip in same interface not duplicate in another.
+                    return False
+                return True #duplicate in another interface
+        return False
+
+    def isDuplicateSubnet(self, ip_pool):
+        for inf in self.interfaces:
+            pool_exist = self.interfaces[inf]['ip_pool']
+            if pool_exist == 'None':
+                return False
+            res = [x for x in pool_exist if x not in ip_pool]
+        if len(res) != 0:
+            return True
+        return False
+    
+    def unassignIP(self, interface):
+        self.interfaces[interface]['ip_address'] = 'None'
+        self.interfaces[interface]['ip_pool'] = 'None'
+
+        self.addLogs("Succesfully unassign IP at interface "+interface)
+    
+
 r1 = Router('Cisco', '3745', 'R1')
 r1.addInterface('GigabitEthernet0/1')
 r1.addInterface('GigabitEthernet0/2')
@@ -143,27 +193,11 @@ r3 = Router('Cisco', 'c2600', 'R3')
 r3.addInterface('GigabitEthernet0/0')
 r3.addInterface('GigabitEthernet0/1')
 r3.showInterface()
-        
-r1.connect('GigabitEthernet0/1', r2, 'GigabitEthernet0/0')
-r1.connect('GigabitEthernet0/2', r3, 'GigabitEthernet0/0')
-r1.showCDP()
-r2.showCDP()
-r3.showCDP()
 
-r1.showLogs()
+r1.assignIpaddr('GigabitEthernet0/1', '192.168.1.7/16')
+r1.assignIpaddr('GigabitEthernet0/9', '192.168.1.7/24')
+r1.unassignIP('GigabitEthernet0/1')
 r1.showInterface()
-r1.connect('GigabitEthernet0/2', r2, 'GigabitEthernet0/3')
-r2.showLogs()
-r2.showInterface()
-r3.showLogs()
-r3.showInterface()
-r1.showLogs()
-r1.showInterface()
-r1.showCDP()
-r3.showCDP()
 
-r1.removeInt('GigabitEthernet0/2')
-r1.showInterface()
-r1.showCDP()
 r1.showLogs()
 
