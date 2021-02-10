@@ -98,8 +98,8 @@ class Router:
         self.interfaces[interface]['n_interface'] = ''
         self.interfaces[interface]['n_platform'] = ''
         self.interfaces[interface]['n_object'] = ''
-        self.interfaces[interface]['ip_address'] = ''
-        self.interfaces[interface]['ip_pool'] = ''
+        self.interfaces[interface]['ip_address'] = 'None'
+        self.interfaces[interface]['ip_pool'] = 'None'
         self.interfaces[interface]['status'] = 'Down'
 
         #add logs
